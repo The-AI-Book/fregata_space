@@ -26,7 +26,7 @@ def load_satetile_images(m: geemap.Map, dataset: Dataset, start_date = "2021-04-
     m.addLayer(combined_img, vis_parms, dataset.dataset_url)
     return m
 
-def generate_timeseries(num_days: int, datasets: List[Dataset], point: List[float], zoom: int, file = "data"):
+def generate_daily_timeseries(num_days: int, datasets: List[Dataset], point: List[float], zoom: int, file = "data"):
     """
     Generates a timeseries of images. 
     This images are save locally as html files.
@@ -129,15 +129,16 @@ def download_collections_to_drive(datasets: List[Dataset], polygon: ee.Geometry.
             count = collections_data.size().getInfo()
             img_list = collections_data.toList(count)
             combined_img =  ee.ImageCollection(img_list).mosaic() # Imagen combinada.
-
-            for band in dataset.bands:
-                task = ee.batch.Export.image.toDrive(
-                    image = combined_img.visualize(
-                        min = dataset.params["min"], 
-                        max = dataset.params["max"], 
-                        bands=[band]
-                    ),
-                    fileNamePrefix='{dataset}_day_{day_num}_{start_date}_{band}'.format(dataset = dataset.name, day_num = day_num, start_date = start_date, band = band),
-                    **task_config)
-                task.start()
-                print(task.status())
+            print("Collecion size: ", count)
+            if count >= 1:
+                for band in dataset.bands:
+                    task = ee.batch.Export.image.toDrive(
+                        image = combined_img.visualize(
+                            min = dataset.params["min"], 
+                            max = dataset.params["max"], 
+                            bands=[band]
+                        ),
+                        fileNamePrefix='{dataset}_day_{day_num}_{start_date}_{band}'.format(dataset = dataset.name, day_num = day_num, start_date = start_date, band = band),
+                        **task_config)
+                    task.start()
+                    print(task.status())

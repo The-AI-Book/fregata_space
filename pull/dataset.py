@@ -156,5 +156,18 @@ copernicus_s5p_offl_l3_ch4 = Dataset(name = "copernicus_s5p_offl_l3_ch4",
                                     time_frequency="real-time", 
                                     scale = 100)
 
+# 
+modis_006_mod11a1 = Dataset(name = "modis_006_mod11a1", 
+                            dataset_url="MODIS/006/MOD11A1", 
+                            bands = ["LST_Day_1km"], 
+                            visible_bands=["LST_Day_1km"], 
+                            params = {
+                              "min": 13000.0,
+                              "max": 16500.0,
+                            }, 
+                            url = "https://developers.google.com/earth-engine/datasets/catalog/MODIS_006_MOD11A1?hl=en#description", 
+                            time_frequency="daily", 
+                            scale=1000)
+
 if __name__ == "__main__":
    print("Available datasets: ")

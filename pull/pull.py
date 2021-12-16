@@ -1,8 +1,10 @@
+
 import ee
 import geemap
 from typing import List
 from dataset import viirs1, copernicus_s5p_offl_l3_cloud, copernicus_s5p_offl_l3_aer_ai, copernicus_s5p_offl_l3_co, copernicus_s2_sr, landsat_lc08_c02_t1_l2
-from data import generate_timeseries, download_collections_to_drive
+from dataset import modis_006_mod11a1
+from data import generate_daily_timeseries, download_collections_to_drive
 
 # Initialize google earth engine.
 ee.Authenticate()
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     #downloadImage()
     #test_images()
     datasets = [viirs1]
+
     square = ee.Geometry.Polygon(
         [[[-63.846874469110226, 14.789676135536729],
           [-63.846874469110226, 11.301164527965645],
@@ -40,7 +43,9 @@ if __name__ == '__main__':
     #download_collections_to_drive(viirs1, square, drive_folder = "data5_juan")
     #download_collections_to_drive(copernicus_s5p_offl_l3_cloud, square, drive_folder="data_clouds", start_date="2021-04-1", end_date = "2021-04-30")
     #datasets=[copernicus_s5p_offl_l3_cloud, copernicus_s5p_offl_l3_aer_ai, copernicus_s5p_offl_l3_co]
-    datasets=[landsat_lc08_c02_t1_l2]
-    generate_timeseries(20, datasets=datasets, point = [0, 0], zoom = 2, file = "data/data9")
+    #datasets=[landsat_lc08_c02_t1_l2]
+    datasets = [viirs1, copernicus_s5p_offl_l3_cloud]
+    datasets = [modis_006_mod11a1]
+    generate_daily_timeseries(20, datasets=datasets, point = [0, 0], zoom = 2, file = "data/data9")
     
     #download_collections_to_drive(datasets = datasets, polygon=square, start_date="2021-04-01", end_date="2021-04-03", drive_folder="prueba_datasets")
