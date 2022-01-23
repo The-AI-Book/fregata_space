@@ -25,10 +25,20 @@ class Dataset:
 # Near Infra Red
 # T4 (10.3 - 11.3 um)
 # T5 (11.5 - 12.5 um)
+noaa_cdr_gridsat_b1 = Dataset(name = "noaa_cdr_gridsat_b1", 
+                              dataset_url = "NOAA/CDR/GRIDSAT-B1/V2",
+                              bands = ['irwin_cdr', 'vschn', 'irwvp'], 
+                              visible_bands = ['irwin_cdr', 'vschn', 'irwvp'],
+                              params = {"min": 500.0, "max": 10000.0}, 
+                              url = "https://developers.google.com/earth-engine/datasets/catalog/NOAA_CDR_GRIDSAT-B1_V2?hl=en#description", 
+                              time_frequency = "daily", 
+                              operations=["M5", "I3-M2", "M1"],
+                              renames = ["DIF1", "DIF2", "DIF3"], 
+                              scale = 1000)
 
 viirs1 = Dataset(name = "viirs1",
                  dataset_url = "NOAA/VIIRS/001/VNP09GA",
-                 bands = ["M5", "M4", "M3", "M8", "I3"], 
+                 bands = ["M5", "M4", "M3"], 
                  visible_bands = ["M5", "M4", "M3"],
                  params = {"min": 0.0, "max": 3000.0}, 
                  url = "https://developers.google.com/earth-engine/datasets/catalog/NOAA_VIIRS_001_VNP09GA?hl=en", 

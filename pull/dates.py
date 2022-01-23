@@ -1,8 +1,8 @@
 import datetime
 
-def generate_days(end_date, num_days):
+def generate_days(end_date, num_days, shift: int = 2):
     date_list = list()
-    for x in range(num_days):
+    for x in range(0, num_days, shift):
         day = end_date - datetime.timedelta(days=x)
         day = day.strftime("%Y-%m-%d")
         date_list.append(day)
@@ -17,12 +17,12 @@ def generate_last_dates(num_days = 365 * 2):
     date_list = generate_days(base, num_days)
     return date_list
 
-def generate_days_between(start_date: str, end_date: str):
+def generate_days_between(start_date: str, end_date: str, shift: int = 2):
     start = datetime.datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.datetime.strptime(end_date, "%Y-%m-%d")
     end += datetime.timedelta(days = 1)
     diff = (end.day - start.day) + 1
-    date_list = generate_days(end, diff)
+    date_list = generate_days(end, diff, shift = shift)
     return date_list 
 
 if __name__ == '__main__':

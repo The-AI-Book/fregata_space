@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from interpolation import imagToMat
-def HSI(R,G,B):
+from PIL import Image
+from os import listdir
+from os.path import isfile, join
+
+def hsi(R,G,B):
 
   I = (R/3)+(G/3)+(B/3)
 
@@ -21,8 +25,7 @@ def HSI(R,G,B):
 
   return [H,I] #En la codificacion HSI existe un valor S = np.sqrt(V_1**2 + V_2**2) que no necesitaremos
 
-
-def WR (H,I,epsilon=0.1):
+def wr(H,I,epsilon=0.1):
 
   W = (H + epsilon)/(I + epsilon)
 
@@ -63,8 +66,7 @@ def otsu_optimal(W): #Aplicare el metodo de otsu https://en.wikipedia.org/wiki/O
 
   return T
 
-
-def Filtro(BV,BF,U,C=500,Visual=True,Color="hot"):
+def clouds_filter(BV,BF,U,C=500,Visual=True,Color="hot"):
   """
   BV Banda visible sobre la que se aplica el filtro
   BF Banda con la informacion de interes
@@ -94,17 +96,58 @@ def Filtro(BV,BF,U,C=500,Visual=True,Color="hot"):
 
       return BV
 
-if __name__ == "__main__":
-    #RGB = WaveToRGB(Rojo,Verde,Azul)
+def get_cloud_image(filename: str):
+    blue = imagToMat("./data/bands_data/" + filename + "M3.tif")
+    green = imagToMat("./data/bands_data/" + filename + "M4.tif")
+    red =  imagToMat("./data/bands_data/" + filename + "M5.tif")
+    hi = hsi(red, green, blue)
+    w = wr(hi[0],hi[1])
+    t = otsu_optimal(w)
+    clouds = clouds_filter(w,w,t,400,Color='hot', Visual=False)
+    clouds = Image.fromarray(clouds * 255).convert("RGB")
+    print(clouds)
+    #res.save("juan.png")
+    return clouds
 
-    blue = imagToMat("experimento/viirs1_day_0_2019-11-07_M3.tif")
-    green = imagToMat("experimento/viirs1_day_0_2019-11-07_M4.tif")
-    red =  imagToMat("experimento/viirs1_day_0_2019-11-07_M5.tif")
-    
-    HI = HSI(red, green, blue)
-    W = WR (HI[0],HI[1])
-    T = otsu_optimal(W)
-    res = Filtro(W,W,T,400,Color='hot', Visual=False)
-    from PIL import Image
-    res = Image.fromarray(res * 255).convert("RGB")
-    res.save("juan.png")
+def get_clouds_image(data_folder = "data/bands_data", results_folder = "data/results/"):
+    onlyfiles = [f for f in listdir(data_folder) if isfile(join(data_folder, f))]
+    unique_names = list()
+    for file in onlyfiles: 
+      index0 = file.find("viirs1")
+      index1 = file.find("M")
+      filename = file[index0: index1]
+      if filename not in unique_names and filename != "":
+        unique_names.append(filename)
+    print(unique_names)
+    counter = 0
+    for file in unique_names:
+      clouds = get_cloud_image(file)  
+      clouds.save(results_folder + "clouds_day_" + str(counter) + ".png")
+      counter += 1
+
+def get_infrared_filter_by_clouds(threshold = 230, data_folder = "data/bands_data", clouds_folder = "data/results/", results_folder = "data/results/"):
+    infraredfiles = [f for f in listdir(data_folder) if isfile(join(data_folder, f)) and f.find("noaa") != -1]
+    cloudsfiles = [f for f in listdir(clouds_folder) if isfile(join(clouds_folder, f))]
+
+    for i in range(0, len(infraredfiles)):
+      infrared_data = imagToMat(data_folder + "/" + infraredfiles[i])
+      clouds_data = imagToMat(clouds_folder + "/" + cloudsfiles[i])
+      clouds_data = clouds_data.reshape(3, clouds_data.shape[0], clouds_data.shape[1])[0]
+      #print(infrared_data.shape)
+      #print(clouds_data.shape)
+      for x in range(infrared_data.shape[0]):
+        for y in range(infrared_data.shape[1]):
+          if clouds_data[x][y] == 0:# and infrared_data[x][y] < threshold:
+            for z in range(3):
+              infrared_data[x][y][z] = 0
+          else:
+            for z in range(3):
+              infrared_data[x][y][z] = 255
+      result = Image.fromarray(infrared_data).convert("RGB")
+      result.save(results_folder + "piro_day_" + str(i) + ".png")
+      print("Image saved.")
+
+
+if __name__ == "__main__":
+    #get_clouds_image(data_folder = "data/bands_data", results_folder = "data/results/")
+    get_infrared_filter_by_clouds()

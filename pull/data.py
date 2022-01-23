@@ -41,7 +41,7 @@ def generate_daily_timeseries(num_days: int, datasets: List[Dataset], point: Lis
     days = generate_last_dates(num_days = num_days)
     for i in range(len(days) - 1):
         start_date = days[i]
-        end_date = days[i + 1]
+        end_date = days[i + 15]
 
         # Create a new map.
         m = geemap.Map()
@@ -110,9 +110,10 @@ def download_image_collection(dataset: Dataset, feature: ee.Feature, start_date 
 #################################
 ##   Download data to Drive   ###
 #################################
-def download_collections_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date = '2021-04-1', end_date = '2021-04-30', drive_folder: str = "data"):
+def download_disjoint_bands_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date = '2021-04-1', end_date = '2021-04-30', shift: int = 2, drive_folder: str = "data"):
     
-    days = generate_days_between(start_date, end_date)
+    days = generate_days_between(start_date, end_date, shift = shift)
+    print(days)
     
     for day_num in range(len(days) - 1):
         start_date = days[day_num]
@@ -142,3 +143,34 @@ def download_collections_to_drive(datasets: List[Dataset], polygon: ee.Geometry.
                         **task_config)
                     task.start()
                     print(task.status())
+
+def download_join_bands_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date: str, end_date: str, shift: int = 1, drive_folder = "test_images"):
+
+    days = generate_days_between(start_date, end_date, shift = shift)
+
+    for day_num in range(len(days) - 1):
+        start_date = days[day_num]
+        end_date = days[day_num + 1]
+
+        for dataset in datasets:
+            collections_data = get_image_collection(dataset, start_date, end_date)
+            count = collections_data.size().getInfo()
+            img_list = collections_data.toList(count)
+            combined_img =  ee.ImageCollection(img_list).mosaic() # Imagen combinada.
+            task_config = {
+                "scale": dataset.scale,
+                "region": polygon, 
+                "folder": drive_folder, 
+            }
+            print("Collecion size: ", count)
+            if count >= 1:
+                task = ee.batch.Export.image.toDrive(
+                    image = combined_img.visualize(
+                        min = dataset.params["min"], 
+                        max = dataset.params["max"], 
+                        bands = dataset.visible_bands
+                    ),
+                    fileNamePrefix='{dataset}_{start_date}'.format(dataset = dataset.name, start_date = start_date),
+                    **task_config)
+                task.start()
+                print(task.status())
