@@ -111,7 +111,9 @@ def download_image_collection(dataset: Dataset, feature: ee.Feature, start_date 
 ##   Download data to Drive   ###
 #################################
 def download_disjoint_bands_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date = '2021-04-1', end_date = '2021-04-30', shift: int = 2, drive_folder: str = "data"):
-    
+    """
+    end_date is included.
+    """
     days = generate_days_between(start_date, end_date, shift = shift)
     print(days)
     
@@ -145,7 +147,9 @@ def download_disjoint_bands_to_drive(datasets: List[Dataset], polygon: ee.Geomet
                     print(task.status())
 
 def download_join_bands_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date: str, end_date: str, shift: int = 1, drive_folder = "test_images"):
-
+    """
+    end_date is included.
+    """
     days = generate_days_between(start_date, end_date, shift = shift)
 
     for day_num in range(len(days) - 1):
@@ -170,7 +174,19 @@ def download_join_bands_to_drive(datasets: List[Dataset], polygon: ee.Geometry.P
                         max = dataset.params["max"], 
                         bands = dataset.visible_bands
                     ),
-                    fileNamePrefix='{dataset}_{start_date}'.format(dataset = dataset.name, start_date = start_date),
+                    fileNamePrefix='{dataset}_day_{day_num}_{start_date}'.format(dataset = dataset.name, day_num = day_num, start_date = start_date),
                     **task_config)
                 task.start()
                 print(task.status())
+
+def download_dataset_to_drive(datasets: List[Dataset], polygon: ee.Geometry.Polygon, start_date: str, end_date: str, shift: int = 1, drive_folder = "test_images"):
+    download_join_bands_to_drive(datasets = datasets, polygon = polygon, start_date=start_date, end_date=end_date, shift=shift, drive_folder=drive_folder)
+    download_disjoint_bands_to_drive(datasets = datasets, polygon = polygon, start_date=start_date, end_date=end_date, shift=shift, drive_folder=drive_folder)
+    
+
+if __name__ == "__main__":
+    start_date="2019-11-07"
+    end_date="2019-12-31"
+    shift = 1
+    days = generate_days_between(start_date, end_date, shift = shift)
+    print(days)

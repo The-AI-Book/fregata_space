@@ -5,6 +5,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+preprocess/clouds
+preprocess/data
+preprocess/interpolation
+preprocess/pyrocumulus
+preprocess/resize
+pull/data
+
 # C extensions
 *.so
 
