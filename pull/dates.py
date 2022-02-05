@@ -20,8 +20,11 @@ def generate_last_dates(num_days = 365 * 2):
 def generate_days_between(start_date: str, end_date: str, shift: int = 2):
     start = datetime.datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    #print("Start date: ", start)
+    #print("End date: ", end)
     end += datetime.timedelta(days = 1)
-    diff = (end.day - start.day) + 1
+    diff = (end - start).days + 1
+    #print("Difference between days: ", diff)
     date_list = generate_days(end, diff, shift = shift)
     return date_list 
 

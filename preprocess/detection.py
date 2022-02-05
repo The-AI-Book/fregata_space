@@ -4,6 +4,7 @@ from interpolation import imagToMat
 from PIL import Image
 from os import listdir
 from os.path import isfile, join
+from sets import DisjSet
 
 def hsi(R,G,B):
 
@@ -75,7 +76,6 @@ def clouds_filter(BV,BF,U,C=500,Visual=True,Color="hot"):
   Visual (True) Muestra la imagen segun el filtro
          (False) Retorna mascara binaria 
   """
-
   if Visual:
       for i in range(len(BV)):
         for j in range(len(BV[0])):
@@ -97,14 +97,14 @@ def clouds_filter(BV,BF,U,C=500,Visual=True,Color="hot"):
       return BV
 
 def get_cloud_image(filename: str):
-    blue = imagToMat("./data/bands_data/" + filename + "M3.tif")
-    green = imagToMat("./data/bands_data/" + filename + "M4.tif")
-    red =  imagToMat("./data/bands_data/" + filename + "M5.tif")
+    blue = imagToMat("./data/" + filename + "M3.tif")
+    green = imagToMat("./data/" + filename + "M4.tif")
+    red =  imagToMat("./data/" + filename + "M5.tif")
     hi = hsi(red, green, blue)
     w = wr(hi[0],hi[1])
     t = otsu_optimal(w)
     clouds = clouds_filter(w,w,t,400,Color='hot', Visual=False)
-    clouds = Image.fromarray(clouds * 255).convert("RGB")
+    clouds = Image.fromarray(clouds * 255).convert("L")
     print(clouds)
     #res.save("juan.png")
     return clouds
@@ -125,29 +125,75 @@ def get_clouds_image(data_folder = "data/bands_data", results_folder = "data/res
       clouds.save(results_folder + "clouds_day_" + str(counter) + ".png")
       counter += 1
 
-def get_infrared_filter_by_clouds(threshold = 230, data_folder = "data/bands_data", clouds_folder = "data/results/", results_folder = "data/results/"):
+def get_infrared_filter_by_clouds(threshold = 232, padding = 200, data_folder = "data/bands_data", clouds_folder = "data/clouds/", results_folder = "data/piro/"):
+    
+    # Get infrared images (noaa dataset)
     infraredfiles = [f for f in listdir(data_folder) if isfile(join(data_folder, f)) and f.find("noaa") != -1]
+    
+    # Get clouds images
     cloudsfiles = [f for f in listdir(clouds_folder) if isfile(join(clouds_folder, f))]
 
     for i in range(0, len(infraredfiles)):
+      print(data_folder + "/" + infraredfiles[i], " => ", clouds_folder + "/" + cloudsfiles[i])
+
+      # Get data.
       infrared_data = imagToMat(data_folder + "/" + infraredfiles[i])
       clouds_data = imagToMat(clouds_folder + "/" + cloudsfiles[i])
-      clouds_data = clouds_data.reshape(3, clouds_data.shape[0], clouds_data.shape[1])[0]
-      #print(infrared_data.shape)
-      #print(clouds_data.shape)
+
+      # Get dimensions.
+      n = infrared_data.shape[0] # y 
+      m = infrared_data.shape[1] # x
+
+      # New image.
+      new_image: np.array = np.zeros((n, m))
+
       for x in range(infrared_data.shape[0]):
         for y in range(infrared_data.shape[1]):
-          if clouds_data[x][y] == 0:# and infrared_data[x][y] < threshold:
-            for z in range(3):
-              infrared_data[x][y][z] = 0
+          if infrared_data[x][y] < threshold:# and infrared_data[x][y] < threshold:
+             new_image[x][y] = 0
           else:
-            for z in range(3):
-              infrared_data[x][y][z] = 255
-      result = Image.fromarray(infrared_data).convert("RGB")
+             new_image[x][y] = clouds_data[x][y]
+      new_image = new_image[padding:n - padding, padding:n - padding]
+      #new_image = new_image.reshape((512, 512))
+      result = Image.fromarray(new_image).convert("L")
       result.save(results_folder + "piro_day_" + str(i) + ".png")
       print("Image saved.")
 
+def test(data_folder = "data/piro"):
+    infraredfiles = [f for f in listdir(data_folder) if isfile(join(data_folder, f))]
+    file0 = infraredfiles[0]
+    matrix = imagToMat(data_folder + "/" + file0)
+    print(matrix.shape)
+    #matrix = matrix.reshape(3, matrix.shape[0], matrix.shape[1])
+    print(matrix)
+  
+    #print(matrix.min(matrix), matrix.max(matrix))
+
+def get_clusters_from_image(piro_folder = "data/piro"):
+    # Get clouds images
+    pirofiles = [f for f in listdir(piro_folder) if isfile(join(piro_folder, f))]
+    for i in range(0, len(pirofiles)):
+
+        # Get data.
+        image = imagToMat(piro_folder + "/" + pirofiles[i])
+        n = image.shape[0]
+        m = image.shape[1]
+
+        parent = list()
+        from sets import Point
+        for i in range(n):
+          for j in range(m):
+            white = True if image[i][j] != 0 else False
+            parent.append(Point(i, j, white = white))
+
+        disjset = DisjSet(parent)
+        disjset.preprocessMaze(image)
+        #print(disjset.parent[0:100])
+        break
+    
 
 if __name__ == "__main__":
-    #get_clouds_image(data_folder = "data/bands_data", results_folder = "data/results/")
-    get_infrared_filter_by_clouds()
+    pass
+    #get_clouds_image(data_folder = "data/bands_data", results_folder = "data/clouds/")
+    #get_infrared_filter_by_clouds(threshold=225, padding = 100)
+    #get_clusters_from_image()

@@ -27,9 +27,9 @@ class Dataset:
 # T5 (11.5 - 12.5 um)
 noaa_cdr_gridsat_b1 = Dataset(name = "noaa_cdr_gridsat_b1", 
                               dataset_url = "NOAA/CDR/GRIDSAT-B1/V2",
-                              bands = ['irwin_cdr', 'vschn', 'irwvp'], 
+                              bands = ['irwin_cdr'], 
                               visible_bands = ['irwin_cdr', 'vschn', 'irwvp'],
-                              params = {"min": 500.0, "max": 10000.0}, 
+                              params = {"min": 200.0, "max": 4000.0}, 
                               url = "https://developers.google.com/earth-engine/datasets/catalog/NOAA_CDR_GRIDSAT-B1_V2?hl=en#description", 
                               time_frequency = "daily", 
                               operations=["M5", "I3-M2", "M1"],
